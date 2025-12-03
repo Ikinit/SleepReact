@@ -1,5 +1,5 @@
 import { createContext, useState } from "react";
-import { databases, account } from "../lib/appwrite";
+import { databases, account, getAccountSafe } from "../lib/appwrite";
 import { ID, Permission, Role, Query } from "react-native-appwrite";
 import { useUser } from "../hooks/useUser";
 
@@ -50,17 +50,14 @@ export function GoalsProvider({ children }){
         }
 
         try{
-            try{
+                try{
                 // Confirm server session is active (helpful diagnostic)
                 console.log('Goals.createGoal - client user:', user)
-                const serverUserLog = await account.get().catch(e => {
-                    console.log('Goals.createGoal - account.get() error:', e?.message ?? e)
-                    return null
-                })
+                const serverUserLog = await getAccountSafe()
                 console.log('Goals.createGoal - account.get() returned:', serverUserLog)
             }catch(_){/* ignore logging errors */}
-
-            const serverUser = await account.get().catch(() => null)
+            
+            const serverUser = await getAccountSafe()
             if(!serverUser) {
                 throw new Error('No active server session (account.get() returned null). Please sign in again.')
             }

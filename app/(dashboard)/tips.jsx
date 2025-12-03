@@ -11,13 +11,14 @@ import { useUser } from '../../hooks/useUser'
 import CommentModal from '../../components/CommentModal'
 
 export default function TipsScreen(){
-  const { fetchCategories, fetchTips, searchTips, createTip, updateTip, deleteTip, publishTip, rateTip, commentTip, browseRankings, createCategory, updateCategory, deleteCategory, fetchComments } = useContext(TipsContext)
+  const { fetchCategories, fetchTips, searchTips, createTip, updateTip, deleteTip, publishTip, rateTip, commentTip, updateComment, deleteComment, browseRankings, createCategory, updateCategory, deleteCategory, fetchComments, fetchUserRatings, removeRating } = useContext(TipsContext)
   const { user } = useUser()
 
   const [categories, setCategories] = useState([])
   const [tips, setTips] = useState([])
   const [query, setQuery] = useState('')
   const [activeTab, setActiveTab] = useState('browse')
+  const [topTimeRange, setTopTimeRange] = useState('week')
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [loading, setLoading] = useState(false)
   const [catTitle, setCatTitle] = useState('')
@@ -31,6 +32,8 @@ export default function TipsScreen(){
   const [commentModalVisible, setCommentModalVisible] = useState(false)
   const [commentTarget, setCommentTarget] = useState(null)
   const [commentText, setCommentText] = useState('')
+  const [commentEditing, setCommentEditing] = useState(null)
+  const [userRatings, setUserRatings] = useState({})
 
   useEffect(() => {
     load()
@@ -47,6 +50,17 @@ export default function TipsScreen(){
           ? await searchTips({ text: query, categoryId: selectedCategory.$id, onlyPublished: true })
           : await fetchTips({ limit: 50, onlyPublished: true })
           setTips(t || [])
+          // fetch current user's ratings for visible tips and cache them for optimistic UI
+          try{
+            const tipIds = (t || []).map(x => x.$id).filter(Boolean)
+            if(tipIds.length && fetchUserRatings){
+              const ratingsMap = await fetchUserRatings(tipIds)
+              // ratingsMap expected shape: { [tipId]: { $id, rating } }
+              setUserRatings(ratingsMap || {})
+            }else{
+              setUserRatings({})
+            }
+          }catch(err){ console.warn('Failed fetching user ratings', err); setUserRatings({}) }
       }else if(activeTab === 'mytips'){
             let all = await fetchTips({ limit: 200, onlyPublished: false })
       if(user && all){
@@ -61,12 +75,43 @@ export default function TipsScreen(){
             setTips([]) // hide tips list
             setEditingTip(null)
       }else if(activeTab === 'top'){
-            const ranked = await browseRankings({ timeRange: 'week', limit: 50, top: true })
-            const tipList = ranked.map(r => r.tip ? r.tip : r)
-            setTips(tipList)
+        const ranked = await browseRankings({ timeRange: topTimeRange, limit: 50, top: true })
+        // browseRankings now returns annotated tip objects (with averageRating and ratingCount)
+        setTips(ranked || [])
+            // also fetch user ratings for top list
+            try{
+              const tipIds = (ranked || []).map(x => x.$id).filter(Boolean)
+              if(tipIds.length && fetchUserRatings){
+                const ratingsMap = await fetchUserRatings(tipIds)
+                setUserRatings(ratingsMap || {})
+              }
+            }catch(err){ console.warn('Failed fetching user ratings for top list', err); }
       }
     }catch(err){
       console.error('Tips load error', err)
+    }finally{
+      setLoading(false)
+    }
+  }
+
+  // Load top-ranked tips for a specific time range directly (avoids reading stale topTimeRange state)
+  async function loadTop(range){
+    setLoading(true)
+    try{
+      console.debug('Loading top tips for range', range)
+      const ranked = await browseRankings({ timeRange: range, limit: 50, top: true })
+      setTips(ranked || [])
+      try{
+        const tipIds = (ranked || []).map(x => x.$id).filter(Boolean)
+        if(tipIds.length && fetchUserRatings){
+          const ratingsMap = await fetchUserRatings(tipIds)
+          setUserRatings(ratingsMap || {})
+        }else{
+          setUserRatings({})
+        }
+      }catch(err){ console.warn('Failed fetching user ratings for top list', err); }
+    }catch(err){
+      console.error('loadTop failed', err)
     }finally{
       setLoading(false)
     }
@@ -140,9 +185,11 @@ export default function TipsScreen(){
     ])
   }
 
-  function openCommentModal(t){
+  function openCommentModal(t, comment = null){
+    // If `comment` is provided, we are editing an existing comment for tip `t`.
     setCommentTarget(t)
-    setCommentText('')
+    setCommentEditing(comment)
+    setCommentText(comment && (comment.text || comment.comment || '') || '')
     setCommentModalVisible(true)
   }
 
@@ -150,9 +197,15 @@ export default function TipsScreen(){
     if(!commentTarget) return
     if(!commentText || !commentText.trim()) return Alert.alert('Validation','Please enter a comment')
     try{
-      await commentTip(commentTarget.$id, commentText.trim())
+      if(commentEditing){
+        // editing an existing comment
+        await updateComment(commentEditing.$id, commentText.trim())
+      }else{
+        await commentTip(commentTarget.$id, commentText.trim())
+      }
       setCommentModalVisible(false)
       setCommentTarget(null)
+      setCommentEditing(null)
       setCommentText('')
       await load()
     }catch(err){
@@ -195,6 +248,17 @@ export default function TipsScreen(){
           <ThemedText>Top Rated</ThemedText>
         </TouchableOpacity>
       </View>
+
+      {/* Top time-range selector */}
+      {activeTab === 'top' && (
+        <View style={{ flexDirection:'row', gap:8, marginTop:8 }}>
+          {['week','month','all'].map(r => (
+            <TouchableOpacity key={r} onPress={async () => { setTopTimeRange(r); await loadTop(r) }} style={[styles.tab, topTimeRange===r && styles.tabActive]}>
+              <ThemedText>{r === 'all' ? 'All Time' : r.charAt(0).toUpperCase() + r.slice(1)}</ThemedText>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
 
       {/* Category pills*/}
       {(activeTab === 'browse' || activeTab === 'top') && (
@@ -301,7 +365,7 @@ export default function TipsScreen(){
                   <View style={{flex:1, paddingRight:8}}>
                     <ThemedText title>{item.title}</ThemedText>
                     <ThemedText>{item.description}</ThemedText>
-                    {!isOwner && <ThemedText style={{fontSize:12, color:'#666'}}>Created by {item.userID || item.userId || 'someone'}</ThemedText>}
+                    {!isOwner && <ThemedText style={{fontSize:12, color:'#666'}}>Created by {item.authorName || item.username || item.userID || item.userId || 'someone'}</ThemedText>}
                   </View>
                   {isOwner ? (
                     <View style={{flexDirection:'row', gap:8}}>
@@ -341,8 +405,48 @@ export default function TipsScreen(){
               categoryTitle={categories.find(c => c.$id === item.categoryId)?.title}
               showRateComment={activeTab === 'browse'}
               fetchComments={fetchComments}
-              onRate={async (tip, n) => { await rateTip(tip.$id, n); load() }}
+              userRating={userRatings[item.$id] ? userRatings[item.$id].rating : undefined}
+              onRate={async (tip, n) => {
+                // optimistic rating: if user taps same value again, remove rating (toggle off)
+                try{
+                  const current = userRatings[tip.$id]?.rating
+                  if(current === n){
+                    // optimistic remove
+                    setUserRatings(prev => { const copy = { ...prev }; delete copy[tip.$id]; return copy })
+                    if(removeRating){
+                      await removeRating(tip.$id)
+                    }else{
+                      // fallback: call rateTip with null to indicate removal if supported
+                      await rateTip(tip.$id, null)
+                    }
+                  }else{
+                    // optimistic set
+                    setUserRatings(prev => ({ ...prev, [tip.$id]: { $id: prev[tip.$id]?.$id, rating: n } }))
+                    await rateTip(tip.$id, n)
+                  }
+                }catch(err){
+                  console.error('Rate action failed', err)
+                  // revert by reloading tips and ratings
+                  await load()
+                  Alert.alert('Error', err?.message || 'Unable to update rating')
+                }
+              }}
               onComment={(tip, text) => { openCommentModal(tip) }}
+              onEditComment={(comment, tip) => { openCommentModal(tip, comment) }}
+              onDeleteComment={(comment, tip) => {
+                Alert.alert('Confirm', 'Delete this comment?', [
+                  { text: 'Cancel', style: 'cancel' },
+                  { text: 'Delete', style: 'destructive', onPress: async () => {
+                      try{
+                        await deleteComment(comment.$id)
+                        await load()
+                      }catch(err){
+                        console.error('Delete comment failed', err)
+                        Alert.alert('Error', err?.message || 'Unable to delete comment')
+                      }
+                  } }
+                ])
+              }}
               onEdit={(t) => startEditTip(t)}
               onDelete={(t) => removeTip(t)}
               onPublish={async (t) => {

@@ -114,7 +114,7 @@ const Log = () => {
         
         <ThemedTextInput
           style={styles.input}
-          placeholder="Sleep Quality (e.g., Good, Fair, Poor)"
+          placeholder="Sleep Quality (1-10)"
           value={sleepQuality}
           onChangeText={setSleepQuality}
         />
@@ -122,7 +122,7 @@ const Log = () => {
 
         <ThemedTextInput
           style={styles.input}
-          placeholder="Date (e.g., 2023-10-01)"
+          placeholder="Date (e.g., 2025-12-01)"
           value={date}
           onChangeText={setDate}
         />

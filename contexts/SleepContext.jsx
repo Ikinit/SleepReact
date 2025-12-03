@@ -35,9 +35,12 @@ export function SleepProvider({ children }) {
     // Fetch a single sleep entry by id
     async function fetchSleepDataById(id) {
         try {
-            // TODO: implement fetching a single document by id (databases.getDocument)
+            if(!id) return null
+            const doc = await databases.getDocument(DATABASE_ID, COLLECTION_ID, id)
+            return doc
         } catch (error) {
-            console.error(error.message);
+            console.error('fetchSleepDataById error:', error.message || error)
+            return null
         }
     }
 
@@ -69,15 +72,32 @@ export function SleepProvider({ children }) {
     // Delete a sleep entry and update local state
     async function deleteSleepData(id) {
         try {
-            // TODO: implement document deletion using databases.deleteDocument
+            if(!id) throw new Error('Missing id')
+            await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, id)
+            setSleepData(prev => (prev || []).filter(d => d.$id !== id))
+            return true
         } catch (error) {
-            console.error(error.message);
+            console.error('deleteSleepData error:', error.message || error)
+            throw error
+        }
+    }
+
+    // Update an existing sleep entry. `updates` should contain only fields to change.
+    async function updateSleepData(id, updates){
+        try{
+            if(!id) throw new Error('Missing id')
+            const updated = await databases.updateDocument(DATABASE_ID, COLLECTION_ID, id, updates)
+            setSleepData(prev => (prev || []).map(d => d.$id === id ? updated : d))
+            return updated
+        }catch(error){
+            console.error('updateSleepData error:', error.message || error)
+            throw error
         }
     }
 
     return (
         <SleepContext.Provider
-            value={{ sleepData, fetchSleepData, fetchSleepDataById, createSleepData, createSleepLog: createSleepData, deleteSleepData }}
+            value={{ sleepData, fetchSleepData, fetchSleepDataById, createSleepData, createSleepLog: createSleepData, deleteSleepData, updateSleepData }}
         >
             {children}
         </SleepContext.Provider>

@@ -13,6 +13,7 @@ import { useUser } from '../../hooks/useUser'
 const register = () => {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+    const [username, setUsername] = useState('')
     const [ error, setError ] = useState(null)
     
 
@@ -22,7 +23,7 @@ const register = () => {
         setError(null)
 
         try{
-            await register(email, password)
+            await register(email, password, username)
         }catch(error){
             setError(error.message)
         }
@@ -44,6 +45,14 @@ const register = () => {
                 onChangeText={setEmail}
                 value={email}
             />
+
+            <ThemedTextInput
+                style={{ width: '80%' , marginBottom: 20 }}
+                placeholder="Username"
+                value={username}
+                onChangeText={setUsername}
+            />
+
             <ThemedTextInput 
                 style={{ width: '80%' , marginBottom: 20 }}
                 placeholder="Password"

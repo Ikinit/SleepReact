@@ -1,5 +1,5 @@
-import { Tabs} from "expo-router"
-import { useColorScheme } from "react-native"
+import { Tabs, useRouter } from "expo-router"
+import { useColorScheme, Pressable } from "react-native"
 import { Colors } from "../../constants/Colors"
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react'
@@ -11,7 +11,9 @@ const DashboardLayout = () => {
     const colorScheme = useColorScheme()
     const theme = Colors[colorScheme] ?? Colors.light
 
-  return (
+    const router = useRouter()
+
+    return (
     <UserOnly>
         <TipsProvider>
         <GoalsProvider>
@@ -29,13 +31,24 @@ const DashboardLayout = () => {
         >
             <Tabs.Screen
                 name="dashboard"
-                options={{title: 'Menu', tabBarIcon: ({ focused}) => (
-                    <Ionicons
-                        size={30}
-                        name={focused ? 'menu' : 'menu-outline'}
-                        color={focused ? theme.iconColorFocused : theme.iconColor}
-                    />
-                )}}
+                options={({ navigation }) => ({
+                    title: 'Menu',
+                    headerShown: true,
+                    headerStyle: { backgroundColor: theme.navBackground },
+                    headerTitleStyle: { color: theme.text },
+                    tabBarIcon: ({ focused}) => (
+                        <Ionicons
+                            size={30}
+                            name={focused ? 'menu' : 'menu-outline'}
+                            color={focused ? theme.iconColorFocused : theme.iconColor}
+                        />
+                    ),
+                    headerRight: () => (
+                        <Pressable style={{ paddingRight: 12 }} onPress={() => router.push('/profile')}>
+                            <Ionicons name='person-outline' size={24} color={theme.iconColor} />
+                        </Pressable>
+                    )
+                })}
             />
 
             <Tabs.Screen 
@@ -76,17 +89,6 @@ const DashboardLayout = () => {
                     <Ionicons
                         size={30}
                         name={focused ? 'bulb' : 'bulb-outline'}
-                        color={focused ? theme.iconColorFocused : theme.iconColor}
-                    />
-                )}}
-            />
-
-            <Tabs.Screen 
-                name="profile" 
-                options={{title: 'Profile', tabBarIcon: ({ focused}) => (
-                    <Ionicons
-                        size={30}
-                        name={focused ? 'person' : 'person-outline'}
                         color={focused ? theme.iconColorFocused : theme.iconColor}
                     />
                 )}}

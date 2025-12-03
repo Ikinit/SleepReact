@@ -1,42 +1,16 @@
-import { StyleSheet, Alert } from 'react-native'
+import { StyleSheet, Alert, Pressable } from 'react-native'
 import React from 'react'
 import { useUser } from '../../hooks/useUser'
 import { useRouter } from 'expo-router'
 
 import ThemedView from '../../components/ThemedView'
 import ThemedText from '../../components/ThemedText'
-import ThemedButton from '../../components/ThemedButton'
 import Spacer from '../../components/spacer'
+import ThemedCard from '../../components/ThemedCard'
 
 const Dashboard = () => {
   const { user, logout } = useUser()
   const router = useRouter()
-
-  const handleLogout = async () => {
-    Alert.alert(
-      "Logout",
-      "Are you sure you want to logout?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel"
-        },
-        {
-          text: "Logout",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await logout()
-              router.replace('/')
-            } catch (error) {
-              console.error('Error during logout:', error)
-              Alert.alert("Error", "Failed to logout")
-            }
-          }
-        }
-      ]
-    )
-  }
 
   const navigateToSleepLog = () => {
     router.push('/sleepLog')
@@ -50,18 +24,22 @@ const Dashboard = () => {
     router.push('/sleepData/sleepHistory')
   }
 
+  const navigateToGoals = () => {
+    router.push('/goals')
+  }
+
+  const navigateToTips = () => {
+    router.push('/tips')
+  }
+
   return (
     <ThemedView style={styles.container}>
-      <ThemedText title={true} style={styles.title}>
-        Menu
-      </ThemedText>
-      
       <ThemedView style={styles.userInfo}>
         <ThemedText style={styles.welcomeText}>
-          Welcome back!
+          Welcome back, {user?.profile?.username}!
         </ThemedText>
         <ThemedText style={styles.emailText}>
-          {user?.email}
+          How did you sleep last night?
         </ThemedText>
       </ThemedView>
 
@@ -69,29 +47,49 @@ const Dashboard = () => {
 
       <ThemedView style={styles.menuSection}>
         <ThemedText style={styles.sectionTitle}>Quick Actions</ThemedText>
-        
-        <ThemedButton onPress={navigateToSleepLog} style={styles.menuButton}>
-          <ThemedText style={styles.buttonText}>📝 Log Sleep</ThemedText>
-        </ThemedButton>
 
-        <ThemedButton onPress={navigateToSleepHistory} style={styles.menuButton}>
-          <ThemedText style={styles.buttonText}>📚 View History</ThemedText>
-        </ThemedButton>
+        <ThemedView style={styles.menuGrid}>
+          <Pressable onPress={navigateToSleepLog} style={({pressed})=>[styles.menuItem, pressed && styles.pressedItem]}>
+            <ThemedCard style={styles.cardInner}>
+              <ThemedText style={styles.icon}>📝</ThemedText>
+              <ThemedText style={styles.menuLabel}>Log Sleep</ThemedText>
+            </ThemedCard>
+          </Pressable>
 
-        <ThemedButton onPress={navigateToStatistics} style={styles.menuButton}>
-          <ThemedText style={styles.buttonText}>📊 Statistics</ThemedText>
-        </ThemedButton>
+          <Pressable onPress={navigateToSleepHistory} style={({pressed})=>[styles.menuItem, pressed && styles.pressedItem]}>
+            <ThemedCard style={styles.cardInner}>
+              <ThemedText style={styles.icon}>📚</ThemedText>
+              <ThemedText style={styles.menuLabel}>History</ThemedText>
+            </ThemedCard>
+          </Pressable>
+
+          <Pressable onPress={navigateToStatistics} style={({pressed})=>[styles.menuItem, pressed && styles.pressedItem]}>
+            <ThemedCard style={styles.cardInner}>
+              <ThemedText style={styles.icon}>📊</ThemedText>
+              <ThemedText style={styles.menuLabel}>Statistics</ThemedText>
+            </ThemedCard>
+          </Pressable>
+
+          <Pressable onPress={navigateToGoals} style={({pressed})=>[styles.menuItem, pressed && styles.pressedItem]}>
+            <ThemedCard style={styles.cardInner}>
+              <ThemedText style={styles.icon}>🎯</ThemedText>
+              <ThemedText style={styles.menuLabel}>Goals</ThemedText>
+            </ThemedCard>
+          </Pressable>
+
+          <Pressable onPress={navigateToTips} style={({pressed})=>[styles.menuItem, pressed && styles.pressedItem]}>
+            <ThemedCard style={styles.cardInner}>
+              <ThemedText style={styles.icon}>💡</ThemedText>
+              <ThemedText style={styles.menuLabel}>Sleep Tips</ThemedText>
+            </ThemedCard>
+          </Pressable>
+
+        </ThemedView>
       </ThemedView>
 
       <Spacer height={30} />
 
-      <ThemedView style={styles.menuSection}>
-        <ThemedText style={styles.sectionTitle}>Account</ThemedText>
-        
-        <ThemedButton onPress={handleLogout} style={[styles.menuButton, styles.logoutButton]}>
-          <ThemedText style={[styles.buttonText, styles.logoutText]}>🚪 Logout</ThemedText>
-        </ThemedButton>
-      </ThemedView>
+     
     </ThemedView>
   )
 }
@@ -133,15 +131,35 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 15,
   },
-  menuButton: {
-    marginVertical: 8,
-    padding: 15,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
+  menuGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
-  buttonText: {
+  menuItem: {
+    width: '48%',
+    marginBottom: 12,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  pressedItem: {
+    opacity: 0.85,
+  },
+  cardInner: {
+    paddingVertical: 18,
+    paddingHorizontal: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+    elevation: 2,
+  },
+  icon: {
+    fontSize: 28,
+    marginBottom: 8,
+  },
+  menuLabel: {
     fontSize: 16,
+    fontWeight: '600',
     textAlign: 'center',
   },
   logoutButton: {
