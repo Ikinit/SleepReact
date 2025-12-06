@@ -8,7 +8,6 @@ function ThemedButton({ style, title, children, onPress, ...rest }) {
     const content = children ?? (title ? title : null);
     const { scheme } = useTheme()
     const bg = Colors.primary
-    // If needed, a per-theme button color could be used here. Keep primary for now.
     return (
         <Pressable
             onPress={onPress}

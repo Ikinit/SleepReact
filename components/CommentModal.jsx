@@ -7,7 +7,6 @@ export default function CommentModal({ visible = false, onClose = () => {}, onSu
   const [text, setText] = React.useState(initialText)
 
   React.useEffect(() => {
-    // Reset local text whenever initialText or visibility changes
     setText(initialText)
   }, [initialText, visible])
 

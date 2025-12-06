@@ -3,7 +3,6 @@ import React, { createContext, useContext, useState } from 'react'
 const ThemeContext = createContext()
 
 export function ThemeProvider({ children }){
-  // scheme: 'system' | 'light' | 'dark'
   const [scheme, setScheme] = useState('system')
 
   function toggleScheme(){

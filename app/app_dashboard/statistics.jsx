@@ -10,7 +10,7 @@ const Statistics = () => {
 
       <Spacer />
       <ThemedText title={true} style={styles.heading}>
-        Your Sleep Statistics
+        This feature is coming soon!
       </ThemedText>
 
     </ThemedView>

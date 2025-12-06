@@ -9,19 +9,17 @@ const Home = () => {
   return (
     <ThemedView style={styles.container}>
 
-    {/* <Image source={Logo} style={styles.img} /> */}
-
       <ThemedText style={styles.title}>Welcome to the Sleep Tracker</ThemedText>
 
       <Spacer height={10} />
       <ThemedText>This is the main content area.</ThemedText>
       <Spacer />
 
-      <Link href="/login" style={styles.link}>
+      <Link href="/app_auth/login" style={styles.link}>
         <><ThemedText>Login Page</ThemedText></>
       </Link>
 
-      <Link href="/register" style={styles.link}>
+      <Link href="/app_auth/register" style={styles.link}>
         <><ThemedText>Register Page</ThemedText></>
       </Link>
 

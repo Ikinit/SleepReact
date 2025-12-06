@@ -23,14 +23,14 @@ export function TipsProvider({ children }){
 			console.warn(`Auth state (${context}):`, s && s.$id ? { userId: s.$id } : 'no session')
 			return s
 		}catch(e){
-			// getAccountSafe already swallows expected errors, but keep a final catch
+			// getAccountSafe already swallows expected errors
 			console.warn(`Auth state (${context}) failed:`, e?.message || e)
 			return null
 		}
 	}
 
 	// ------------------ Category functions ------------------
-	// Fetch categories ordered by creation time (desc)
+	// Fetch categories ordered by creation time
 	async function fetchCategories({ limit = 100 } = {}){
 		try{
 			const queries = [ Query.limit(limit), Query.orderDesc('$createdAt') ]
@@ -58,7 +58,7 @@ export function TipsProvider({ children }){
 			payload.username = user?.profile?.username || user?.name || user?.email || undefined
 		}catch(_){ }
 
-		// Try creating the document; if the collection schema rejects `username`, retry without it.
+		// Try creating the document if the collection schema rejects `username`, retry without it.
 		try{
 			const doc = await databases.createDocument(
 				DATABASE_ID,
@@ -75,8 +75,7 @@ export function TipsProvider({ children }){
 			setCategories(prev => [doc, ...prev])
 			return doc
 		}catch(error){
-			// If Appwrite complains about unknown attribute (e.g. strict collection schema),
-			// remove username and retry creation as a best-effort fallback.
+			// remove username and retry creation
 			const msg = String(error?.message || '')
 			if(/unknown attribute/i.test(msg) && payload.username){
 				console.warn('createCategory: collection rejected `username` attribute — retrying without it')
@@ -145,7 +144,6 @@ export function TipsProvider({ children }){
 			throw error
 		}
 	}
-	// Normalize tags -> comma string and ensure default status
 	function _normalizeTipPayload(payload){
 		const p = { ...payload }
 		if(p.tags && Array.isArray(p.tags)){
@@ -167,7 +165,7 @@ export function TipsProvider({ children }){
 			if(serverUser && user && serverUser.$id !== user.$id){
 				console.warn('createTip: mismatch between client user and server session')
 			}
-			// Attach sensible default permissions: public read, owner update/delete
+			// Attach sensible default permissions, public read, owner update/delete
 			const doc = await databases.createDocument(
 				DATABASE_ID,
 				COLLECTION_TIPS,
@@ -262,7 +260,6 @@ export function TipsProvider({ children }){
 	}
 
 	// Fetch ratings for the current user filtered to a set of tip IDs.
-	// Returns a map: { [tipId]: { $id, rating } }
 	async function fetchUserRatings(tipIds = []){
 		if(!user) return {}
 		try{
@@ -284,7 +281,7 @@ export function TipsProvider({ children }){
 		}
 	}
 
-	// Fetch all ratings that the given user has made (returns an array)
+	// Fetch all ratings that the given user has made
 	async function fetchUserRatingsByUser(userId){
 		if(!userId) return []
 	 	try{
@@ -391,7 +388,7 @@ export function TipsProvider({ children }){
 			}
 
 			await databases.deleteDocument(DATABASE_ID, COLLECTION_TIP_COMMENTS, commentId)
-			// attempt to decrement aggregate comment count on tip (best-effort)
+			// attempt to decrement aggregate comment count on tip
 			try{
 				const tipId = c.tipID || c.tipId || c.tip || c.tip_id
 				if(tipId){
@@ -427,7 +424,6 @@ export function TipsProvider({ children }){
 		}
 		try{
 			const qAll = [ Query.limit(limit), Query.orderDesc('$createdAt') ]
-			// Final fallback: scan recent comments and filter client-side
 			const resAll = await databases.listDocuments(DATABASE_ID, COLLECTION_TIP_COMMENTS, qAll)
 			const allDocs = resAll.documents || []
 			const filtered = allDocs.filter(d => candidates.some(f => d[f] === tipId))
@@ -441,17 +437,12 @@ export function TipsProvider({ children }){
 		return []
 	}
 
-	// Helper: attach a display name (`authorName`) to comment documents.
-	// Attempts to use any existing username-like fields on the comment, then
-	// queries the `profiles` collection for author usernames when missing.
 	async function _attachUsernamesToComments(docs = []){
 		if(!docs || !docs.length) return docs
 
-		// Collect unique user ids that need lookup
 		const needLookup = new Set()
 		for(const d of docs){
 			const possible = d.username || d.authorName || d.userName || d.userID || d.userId || d.author || d.owner
-			// if username-like field exists (non-empty), we will use it later
 			if(!(d.username || d.authorName || d.userName) && (d.userID || d.userId || d.author || d.owner)){
 				const uid = d.userID || d.userId || d.author || d.owner
 				if(uid) needLookup.add(uid)
@@ -460,7 +451,7 @@ export function TipsProvider({ children }){
 
 		const lookupResults = {}
 		if(needLookup.size){
-			// Fetch profile docs for each user id in parallel (limited concurrency not implemented)
+			// Fetch profile docs for each user id in parallel 
 			try{
 				const promises = Array.from(needLookup).map(async uid => {
 					try{
@@ -525,10 +516,8 @@ export function TipsProvider({ children }){
 				})
 			}
 
-			// Build a lookup of tips by id
 			const tipIds = candidates.map(t => t.$id).filter(Boolean)
 
-			// Fetch a large page of ratings and aggregate by tip id. This avoids N queries when many tips.
 			let ratingDocs = []
 			try{
 				const r = await databases.listDocuments(DATABASE_ID, COLLECTION_TIP_RATINGS, [ Query.limit(2000) ])
@@ -546,13 +535,11 @@ export function TipsProvider({ children }){
 				agg[tId].count += 1
 			}
 
-			// Annotate candidates with averages and counts
 			const annotated = candidates.map(t => {
 				const a = agg[t.$id]
 				if(a && a.count){
 					return { ...t, averageRating: (a.sum / a.count), ratingCount: a.count }
 				}
-				// fall back to stored aggregates on the tip document
 				const ratingCount = Number(t.ratingCount || 0)
 				const ratingSum = Number(t.ratingSum || 0)
 				return { ...t, averageRating: ratingCount ? (ratingSum / ratingCount) : 0, ratingCount }

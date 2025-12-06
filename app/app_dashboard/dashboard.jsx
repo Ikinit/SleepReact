@@ -13,30 +13,30 @@ const Dashboard = () => {
   const router = useRouter()
 
   const navigateToSleepLog = () => {
-    router.push('/sleepLog')
+    router.push('/app_dashboard/sleepLog')
   }
 
   const navigateToStatistics = () => {
-    router.push('/statistics')
+    router.push('/app_dashboard/statistics')
   }
 
   const navigateToSleepHistory = () => {
-    router.push('/sleepData/sleepHistory')
+    router.push('/app_dashboard/sleepData/sleepHistory')
   }
 
   const navigateToGoals = () => {
-    router.push('/goals')
+    router.push('/app_dashboard/goals')
   }
 
   const navigateToTips = () => {
-    router.push('/tips')
+    router.push('/app_dashboard/tips')
   }
 
   return (
     <ThemedView style={styles.container}>
       <ThemedView style={styles.userInfo}>
         <ThemedText style={styles.welcomeText}>
-          Welcome back, {user?.profile?.username}!
+          Hello, {user?.profile?.username}!
         </ThemedText>
         <ThemedText style={styles.emailText}>
           How did you sleep last night?

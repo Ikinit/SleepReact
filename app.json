@@ -1,7 +1,7 @@
 {
   "expo": {
     "scheme": "myapp",
-    "name": "SleepReact",
+    "name": "Sleep Tracker",
     "slug": "SleepReact",
     "version": "1.0.0",
     "orientation": "portrait",

@@ -1,5 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react'
-import { StyleSheet, View, FlatList, Alert, TouchableOpacity } from 'react-native'
+import { StyleSheet, View, FlatList, Alert, TouchableOpacity, Platform } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
+import DateTimePicker from '@react-native-community/datetimepicker'
 
 import Spacer from "../../components/spacer"
 import ThemedText from "../../components/ThemedText"
@@ -19,6 +21,10 @@ const Goals = () => {
   const [displayed, setDisplayed] = useState([])
   const [filterStatus, setFilterStatus] = useState(null)
   const [searchRange, setSearchRange] = useState({ startDate: '', endDate: '' })
+  const [showStartDatePicker, setShowStartDatePicker] = useState(false)
+  const [showEndDatePicker, setShowEndDatePicker] = useState(false)
+  const [selectedStartDate, setSelectedStartDate] = useState(new Date())
+  const [selectedEndDate, setSelectedEndDate] = useState(new Date())
 
   useEffect(() => {
     load()
@@ -29,6 +35,28 @@ const Goals = () => {
       setDisplayed(goals)
     }
   }, [goals])
+
+  const handleStartDateChange = (event, selectedDate) => {
+    if (Platform.OS === 'android') {
+      setShowStartDatePicker(false)
+    }
+    if (selectedDate) {
+      setSelectedStartDate(selectedDate)
+      const formattedDate = selectedDate.toISOString().split('T')[0]
+      setForm(f => ({...f, startDate: formattedDate}))
+    }
+  }
+
+  const handleEndDateChange = (event, selectedDate) => {
+    if (Platform.OS === 'android') {
+      setShowEndDatePicker(false)
+    }
+    if (selectedDate) {
+      setSelectedEndDate(selectedDate)
+      const formattedDate = selectedDate.toISOString().split('T')[0]
+      setForm(f => ({...f, endDate: formattedDate}))
+    }
+  }
 
   async function load(){
     setLoading(true)
@@ -180,8 +208,62 @@ const Goals = () => {
           {form.type === 'text' && (
             <ThemedTextInput placeholder="Rule / note" value={form.rule} onChangeText={t => setForm(f => ({...f, rule: t}))} />
           )}
-          <ThemedTextInput placeholder="Start date (YYYY-MM-DD)" value={form.startDate} onChangeText={t => setForm(f => ({...f, startDate: t}))} />
-          <ThemedTextInput placeholder="End date (YYYY-MM-DD)" value={form.endDate} onChangeText={t => setForm(f => ({...f, endDate: t}))} />
+          
+          <ThemedText style={styles.label}>Start Date</ThemedText>
+          <TouchableOpacity 
+            style={styles.dateButton}
+            onPress={() => setShowStartDatePicker(true)}
+          >
+            <Ionicons name="calendar-outline" size={18} color="#10549dff" />
+            <ThemedText style={styles.dateButtonText}>
+              {form.startDate || 'Select Start Date'}
+            </ThemedText>
+            <Ionicons name="chevron-down" size={18} color="#10549dff" />
+          </TouchableOpacity>
+
+          {showStartDatePicker && (
+            <DateTimePicker
+              value={selectedStartDate}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={handleStartDateChange}
+            />
+          )}
+          {Platform.OS === 'ios' && showStartDatePicker && (
+            <View style={styles.iosPickerButtons}>
+              <TouchableOpacity onPress={() => setShowStartDatePicker(false)}>
+                <ThemedText style={styles.iosButton}>Done</ThemedText>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          <ThemedText style={styles.label}>End Date</ThemedText>
+          <TouchableOpacity 
+            style={styles.dateButton}
+            onPress={() => setShowEndDatePicker(true)}
+          >
+            <Ionicons name="calendar-outline" size={18} color="#10549dff" />
+            <ThemedText style={styles.dateButtonText}>
+              {form.endDate || 'Select End Date'}
+            </ThemedText>
+            <Ionicons name="chevron-down" size={18} color="#10549dff" />
+          </TouchableOpacity>
+
+          {showEndDatePicker && (
+            <DateTimePicker
+              value={selectedEndDate}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={handleEndDateChange}
+            />
+          )}
+          {Platform.OS === 'ios' && showEndDatePicker && (
+            <View style={styles.iosPickerButtons}>
+              <TouchableOpacity onPress={() => setShowEndDatePicker(false)}>
+                <ThemedText style={styles.iosButton}>Done</ThemedText>
+              </TouchableOpacity>
+            </View>
+          )}
 
           <ThemedButton onPress={onSubmit}><ThemedText>{editingId ? 'Save' : 'Create'}</ThemedText></ThemedButton>
         </ThemedCard>
@@ -220,9 +302,41 @@ const styles = StyleSheet.create({
   filterRow: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 8 },
   dateRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 },
   dateInput: { flex: 1, marginRight: 8 },
-  form: { margin: 12, padding: 12 }
-  ,
+  form: { margin: 12, padding: 12 },
   typeRow: { flexDirection: 'row', justifyContent: 'space-between', marginVertical: 8 },
   typeBtn: { flex: 1, padding: 12, alignItems: 'center', marginHorizontal: 4, borderRadius: 6, backgroundColor: '#e0e0e0' },
-  typeBtnActive: { backgroundColor: '#1976d2' }
+  typeBtnActive: { backgroundColor: '#1976d2' },
+  label: { fontWeight: '600', fontSize: 14, marginBottom: 6, marginTop: 10 },
+  dateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#10549dff',
+    backgroundColor: 'rgba(16, 84, 157, 0.05)',
+    marginBottom: 12,
+  },
+  dateButtonText: {
+    flex: 1,
+    marginLeft: 10,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  iosPickerButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#ccc',
+  },
+  iosButton: {
+    color: '#10549dff',
+    fontSize: 16,
+    fontWeight: '600',
+    paddingHorizontal: 12,
+  },
 })

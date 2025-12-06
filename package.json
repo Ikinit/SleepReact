@@ -9,17 +9,26 @@
     "web": "expo start --web"
   },
   "dependencies": {
-    "expo": "~54.0.7",
-    "expo-constants": "~18.0.9",
-    "expo-linking": "~8.0.8",
-    "expo-router": "~6.0.6",
+    "@expo/metro-runtime": "^6.1.2",
+    "@react-native-community/datetimepicker": "^8.5.1",
+    "expo": "~54.0.25",
+    "expo-constants": "~18.0.10",
+    "expo-linking": "~8.0.9",
+    "expo-router": "~6.0.15",
     "expo-status-bar": "~3.0.8",
     "react": "19.1.0",
-    "react-native": "0.81.4",
+    "react-dom": "19.1.0",
+    "react-native": "0.81.5",
     "react-native-appwrite": "^0.13.0",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
     "react-native-url-polyfill": "^2.0.0"
   },
-  "private": true
+  "private": true,
+  "overrides": {
+    "expo-file-system": "19.0.19",
+    "react-native-appwrite": {
+      "expo-file-system": "19.0.19"
+    }
+  }
 }

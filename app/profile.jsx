@@ -37,10 +37,14 @@ const Profile = () => {
         <Text style={{ color: '#f2f2f2'}}>{scheme === 'dark' ? 'Switch to Light' : 'Switch to Dark'}</Text>
       </ThemedButton>
 
+      <ThemedButton onPress={() => router.push('/about')}>
+        <Text style={{ color: '#f2f2f2'}}>About</Text>
+      </ThemedButton>
+
       <ThemedButton onPress={async () => {
         try{
           await logout()
-          router.replace('/')
+          router.replace('/app_auth/login')
         }catch(err){
           console.warn('Logout failed:', err?.message || err)
         }

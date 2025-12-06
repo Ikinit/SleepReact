@@ -13,7 +13,6 @@ export function GoalsProvider({ children }){
     const { user } = useUser()
 
     // Fetch goals for the current user.
-    // Accepts options for limit and ordering.
     async function fetchGoals({ limit = 100, orderDesc = true } = {}){
         if(!user) return []
 
@@ -40,7 +39,6 @@ export function GoalsProvider({ children }){
             status: data.status || 'Active'
         }
         
-        // Normalize `days` array -> comma string for storage/display
         if(Array.isArray(payload.days)){
             try{
                 payload.days = payload.days.join(',')
@@ -51,7 +49,7 @@ export function GoalsProvider({ children }){
 
         try{
                 try{
-                // Confirm server session is active (helpful diagnostic)
+                // Confirm server session is active
                 console.log('Goals.createGoal - client user:', user)
                 const serverUserLog = await getAccountSafe()
                 console.log('Goals.createGoal - account.get() returned:', serverUserLog)
@@ -87,7 +85,7 @@ export function GoalsProvider({ children }){
             const msg = (error && (error.message || (error.response && error.response.message))) || ''
             const code = error?.code || error?.status || null
 
-            // If permission denied, attempt a development fallback (document created without custom permissions)
+            // If permission denied, attempt a development fallback
             if(code === 401 || code === 403 || /not authorized|unauthorized/i.test(msg)){
                 try{
                     console.warn('Appwrite create unauthorized - attempting fallback create WITHOUT custom permissions (dev).')
@@ -96,7 +94,7 @@ export function GoalsProvider({ children }){
                         COLLECTION_ID,
                         ID.unique(),
                         payload,
-                        [] // no custom permissions -> public according to collection settings
+                        [] // no custom permissions 
 
                     )
                     console.warn('Fallback create succeeded. Document created without owner-only permissions; update collection permissions in Appwrite Console to enforce owner-only access.')

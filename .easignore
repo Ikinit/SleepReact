@@ -1,0 +1,10 @@
+# Exclude local caches and build artifacts
+.expo
+node_modules
+*.log
+dist
+web-build
+build
+.DS_Store
+.vscode
+.idea

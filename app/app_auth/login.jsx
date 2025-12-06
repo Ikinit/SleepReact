@@ -60,7 +60,7 @@ const Login = () => {
 
         <Spacer height={100} />
         
-        <Link href="/register">
+        <Link href="/app_auth/register">
             <ThemedText style={{ textAlign: 'center'}}>
                 Register instead
             </ThemedText>

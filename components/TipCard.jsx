@@ -26,9 +26,7 @@ export default function TipCard({ tip = {}, categoryTitle, onRate, onComment, on
       <View style={styles.actionsRow}>
         {showRateComment && (
               <>
-                {/* Rating UI: show clickable 1..5 stars. Parent `onRate` receives (tip, rating). */}
                 <RatingStars
-                  // Prefer showing the current user's rating if available; fall back to the averaged value
                   value={userRating || (tip.averageRating ? Math.round(Number(tip.averageRating)) : 0)}
                   onChange={(n) => onRate && onRate(tip, n)}
                 />
@@ -42,7 +40,7 @@ export default function TipCard({ tip = {}, categoryTitle, onRate, onComment, on
         {isOwner && showOwnerActions && onDelete && <ThemedButton title='Delete' onPress={() => onDelete && onDelete(tip)} />}
       </View>
 
-      {/* Comments toggle & list - only render in browse (controlled by showRateComment) */}
+      {/* Comments toggle & list - only render in browse*/}
       {showRateComment && (
         <View style={{ marginTop: 8 }}>
           <ThemedButton
@@ -74,7 +72,6 @@ export default function TipCard({ tip = {}, categoryTitle, onRate, onComment, on
               ) : (
                 comments.map(c => {
                   const commentText = c.text || c.comment || c.body || c.message || ''
-                  // Prefer a resolved display name (authorName) attached by the context; fall back to username or user id
                   const author = c.authorName || c.username || c.userID || c.userId || c.author || 'user'
                   const createdRaw = c.$createdAt || c.createdAt || c.created_at || null
                   let created = ''

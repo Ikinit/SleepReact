@@ -50,12 +50,11 @@ export default function TipsScreen(){
           ? await searchTips({ text: query, categoryId: selectedCategory.$id, onlyPublished: true })
           : await fetchTips({ limit: 50, onlyPublished: true })
           setTips(t || [])
-          // fetch current user's ratings for visible tips and cache them for optimistic UI
+          // fetch current user's ratings for visible tips
           try{
             const tipIds = (t || []).map(x => x.$id).filter(Boolean)
             if(tipIds.length && fetchUserRatings){
               const ratingsMap = await fetchUserRatings(tipIds)
-              // ratingsMap expected shape: { [tipId]: { $id, rating } }
               setUserRatings(ratingsMap || {})
             }else{
               setUserRatings({})
@@ -76,7 +75,7 @@ export default function TipsScreen(){
             setEditingTip(null)
       }else if(activeTab === 'top'){
         const ranked = await browseRankings({ timeRange: topTimeRange, limit: 50, top: true })
-        // browseRankings now returns annotated tip objects (with averageRating and ratingCount)
+        // browseRankings now returns annotated tip object
         setTips(ranked || [])
             // also fetch user ratings for top list
             try{
@@ -94,7 +93,7 @@ export default function TipsScreen(){
     }
   }
 
-  // Load top-ranked tips for a specific time range directly (avoids reading stale topTimeRange state)
+  // Load top-ranked tips for a specific time range directly
   async function loadTop(range){
     setLoading(true)
     try{
@@ -186,7 +185,6 @@ export default function TipsScreen(){
   }
 
   function openCommentModal(t, comment = null){
-    // If `comment` is provided, we are editing an existing comment for tip `t`.
     setCommentTarget(t)
     setCommentEditing(comment)
     setCommentText(comment && (comment.text || comment.comment || '') || '')
@@ -407,20 +405,20 @@ export default function TipsScreen(){
               fetchComments={fetchComments}
               userRating={userRatings[item.$id] ? userRatings[item.$id].rating : undefined}
               onRate={async (tip, n) => {
-                // optimistic rating: if user taps same value again, remove rating (toggle off)
+                //if user taps same value again, remove rating (toggle off)
                 try{
                   const current = userRatings[tip.$id]?.rating
                   if(current === n){
-                    // optimistic remove
+                    // remove
                     setUserRatings(prev => { const copy = { ...prev }; delete copy[tip.$id]; return copy })
                     if(removeRating){
                       await removeRating(tip.$id)
                     }else{
-                      // fallback: call rateTip with null to indicate removal if supported
+                      // call rateTip with null to indicate removal if supported
                       await rateTip(tip.$id, null)
                     }
                   }else{
-                    // optimistic set
+                    // set
                     setUserRatings(prev => ({ ...prev, [tip.$id]: { $id: prev[tip.$id]?.$id, rating: n } }))
                     await rateTip(tip.$id, n)
                   }

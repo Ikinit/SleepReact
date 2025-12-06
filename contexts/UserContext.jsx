@@ -17,10 +17,7 @@ export function UserProvider({ children }) {
             // Creates server session for the provided credentials
             await account.createEmailPasswordSession(email, password);
 
-            // Fetch the current account (server-side) so client state matches server session
-            // Use the safe helper to avoid uncaught AppwriteExceptions when scopes/session are invalid.
             const response = await getAccountSafe();
-            // fetch profile for this user (if exists)
             if(response && response.$id){
                 try{
                     const p = await databases.listDocuments(DATABASE_ID, COLLECTION_PROFILES, [ Query.equal('userID', response.$id), Query.limit(1) ])
@@ -33,11 +30,9 @@ export function UserProvider({ children }) {
                 setUser(response)
             }
         } catch (error) {
-            // Bubble a normalized error string to UI
             throw Error(error.message);
         }
     }
-
     // Create a user account, then sign in immediately
     async function register(email, password, username) {
         try {
@@ -71,7 +66,6 @@ export function UserProvider({ children }) {
     // Deletes current session on server and clears local user state
     async function logout() {
         try{
-            // Attempt to delete the server session; swallow errors so logout is resilient
             await account.deleteSession('current'); // deletes current session cookie/token
         }catch(err){
             console.warn('logout: account.deleteSession failed:', err?.message || err)
@@ -80,7 +74,6 @@ export function UserProvider({ children }) {
         }
     }
 
-    // On app mount, check if a server session exists and populate user.
     // Set `authChecked` true whether user exists or not so UI can continue.
     async function getInitialUserValue() {
         try {
